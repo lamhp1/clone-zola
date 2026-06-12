@@ -1,13 +1,43 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const AUTH_TOKEN_KEY = "clone_zola_auth_token";
+
+export function getStoredAuthToken() {
+  return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+export function clearStoredAuthToken() {
+  localStorage.removeItem(AUTH_TOKEN_KEY);
+}
+
+export function consumeAuthTokenFromUrl() {
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get("token");
+
+  if (!token) {
+    return getStoredAuthToken();
+  }
+
+  localStorage.setItem(AUTH_TOKEN_KEY, token);
+  url.searchParams.delete("token");
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}` || "/");
+  return token;
+}
+
+function authHeaders(headers = {}) {
+  const token = getStoredAuthToken();
+
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...headers
+  };
+}
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers
-    },
-    ...options
+    ...options,
+    headers: authHeaders(options.headers)
   });
 
   const data = await response.json().catch(() => ({}));
@@ -24,11 +54,15 @@ export function getGoogleLoginUrl() {
 }
 
 export async function fetchCurrentUser() {
+  consumeAuthTokenFromUrl();
+
   const response = await fetch(`${API_URL}/api/auth/me`, {
-    credentials: "include"
+    credentials: "include",
+    headers: authHeaders()
   });
 
   if (!response.ok) {
+    clearStoredAuthToken();
     return null;
   }
 
@@ -37,9 +71,13 @@ export async function fetchCurrentUser() {
 }
 
 export async function logout() {
-  await request("/api/auth/logout", {
-    method: "POST"
-  });
+  try {
+    await request("/api/auth/logout", {
+      method: "POST"
+    });
+  } finally {
+    clearStoredAuthToken();
+  }
 }
 
 export async function searchUsers(query) {
