@@ -15,9 +15,18 @@ configurePassport();
 
 export const app = express();
 
+const allowedOrigins = new Set(env.clientUrls);
+
 app.use(
   cors({
-    origin: env.clientUrl,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.has(origin.replace(/\/+$/, ""))) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error("Not allowed by CORS"));
+    },
     credentials: true
   })
 );
