@@ -10,10 +10,12 @@ const authCookieOptions = {
 
 export function handleGoogleCallback(req, res) {
   const token = signAuthToken(req.user);
+  const redirectUrl = new URL("/auth/callback", env.clientUrl);
 
+  redirectUrl.searchParams.set("token", token);
   res.cookie("token", token, authCookieOptions);
 
-  res.redirect(`${env.clientUrl}/auth/callback`);
+  res.redirect(redirectUrl.toString());
 }
 
 export function getCurrentUser(req, res) {
