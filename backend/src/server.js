@@ -16,15 +16,10 @@ const io = new Server(httpServer, {
 
 registerSocketHandlers(io);
 
-async function bootstrap() {
-  await connectDatabase();
+httpServer.listen(env.port, "0.0.0.0", () => {
+  console.log(`API listening on port ${env.port}`);
 
-  httpServer.listen(env.port, () => {
-    console.log(`API listening on http://localhost:${env.port}`);
+  connectDatabase().catch((error) => {
+    console.error("MongoDB connection failed", error);
   });
-}
-
-bootstrap().catch((error) => {
-  console.error("Failed to start server", error);
-  process.exit(1);
 });
