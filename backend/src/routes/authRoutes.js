@@ -9,7 +9,8 @@ authRoutes.get(
   "/google",
   passport.authenticate("google", {
     scope: ["profile", "email"],
-    session: false
+    session: false,
+    prompt: "login select_account"
   })
 );
 
