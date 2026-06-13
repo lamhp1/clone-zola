@@ -186,7 +186,7 @@ input {
 }
 
 .chatSidebar,
-groupPanel {
+.groupPanel {
   display: grid;
   align-content: start;
   gap: 14px;
