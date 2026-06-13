@@ -33,3 +33,9 @@ npm run dev
 Frontend: `http://localhost:5173`
 
 Backend: `http://localhost:5000`
+
+## Sticker Attribution
+
+Sticker artwork uses OpenMoji SVG assets via jsDelivr CDN.
+
+All emojis designed by [OpenMoji](https://openmoji.org/) - the open-source emoji and icon project. License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
