@@ -1,3 +1,4 @@
+import { Conversation } from "../models/Conversation.js";
 import { FriendRequest } from "../models/FriendRequest.js";
 import { User } from "../models/User.js";
 
@@ -9,10 +10,6 @@ function publicUser(user) {
     avatar: user.avatar,
     userCode: user.userCode
   };
-}
-
-function escapeRegex(value) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 async function getRelationshipStatus(currentUserId, targetUserId) {
@@ -42,6 +39,10 @@ async function getRelationshipStatus(currentUserId, targetUserId) {
   return pendingRequest.requester.equals(currentUserId) ? "sent" : "received";
 }
 
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 export async function searchUsers(req, res, next) {
   try {
     const query = String(req.query.q || "").trim();
@@ -52,6 +53,7 @@ export async function searchUsers(req, res, next) {
 
     const normalizedEmail = query.toLowerCase();
     const normalizedCode = query.toUpperCase();
+    const matcher = new RegExp(escapeRegex(query), "i");
     const users = await User.find({
       _id: { $ne: req.user._id },
       $or: [
@@ -62,9 +64,42 @@ export async function searchUsers(req, res, next) {
       .select("name email avatar userCode")
       .limit(10);
 
+    const nicknameConversations = await Conversation.find({
+      type: "direct",
+      participants: req.user._id,
+      nicknames: {
+        $elemMatch: {
+          owner: req.user._id,
+          name: matcher
+        }
+      }
+    })
+      .select("participants nicknames")
+      .populate("participants", "name email avatar userCode")
+      .limit(10);
+
+    const usersById = new Map(users.map((user) => [String(user._id), { user }]));
+
+    nicknameConversations.forEach((conversation) => {
+      const targetUser = conversation.participants.find(
+        (participant) => !participant._id.equals(req.user._id)
+      );
+      const nickname = conversation.nicknames.find(
+        (item) => item.owner.equals(req.user._id) && matcher.test(item.name)
+      );
+
+      if (targetUser && !usersById.has(String(targetUser._id))) {
+        usersById.set(String(targetUser._id), {
+          user: targetUser,
+          matchedNickname: nickname?.name || ""
+        });
+      }
+    });
+
     const decoratedUsers = await Promise.all(
-      users.map(async (user) => ({
+      [...usersById.values()].slice(0, 10).map(async ({ user, matchedNickname }) => ({
         ...publicUser(user),
+        matchedNickname,
         relationshipStatus: await getRelationshipStatus(req.user._id, user._id)
       }))
     );
