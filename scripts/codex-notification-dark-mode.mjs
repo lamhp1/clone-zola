@@ -13,7 +13,8 @@ function replaceOnce(source, search, replacement, label) {
 }
 
 let watcher = fs.readFileSync(watcherPath, "utf8");
-watcher = replaceOnce(watcher, 'import { Badge, Button, notification } from "antd";', 'import { Badge, notification, Switch } from "antd";', "watcher imports");
+watcher = replaceOnce(watcher, 'import { useEffect, useMemo, useRef, useState } from "react";', 'import { useEffect, useRef, useState } from "react";', "watcher React import");
+watcher = replaceOnce(watcher, 'import { Badge, Button, notification } from "antd";', 'import { Badge, notification, Switch } from "antd";', "watcher antd imports");
 watcher = replaceOnce(
   watcher,
   `  const [permission, setPermission] = useState(getNotificationPermission);
@@ -120,9 +121,9 @@ watcher = replaceOnce(
 fs.writeFileSync(watcherPath, watcher);
 
 let app = fs.readFileSync(appPath, "utf8");
-app = replaceOnce(app, "  ConfigProvider,\n  Divider,", "  ConfigProvider,\n  Divider,", "config provider anchor");
-app = replaceOnce(app, "  Select,\n  Space,", "  Select,\n  Space,\n  Switch,", "Switch import");
-app = replaceOnce(app, "const { Text, Title } = Typography;", "const { Text, Title } = Typography;\nconst { darkAlgorithm, defaultAlgorithm } = ConfigProvider.theme;", "theme algorithms");
+app = replaceOnce(app, "  Space,\n  Spin,", "  Space,\n  Spin,\n  Switch,", "Switch import");
+app = replaceOnce(app, "  Tooltip,\n  Typography\n} from \"antd\";", "  Tooltip,\n  Typography,\n  theme\n} from \"antd\";", "theme import");
+app = replaceOnce(app, "const { Text, Title } = Typography;", "const { Text, Title } = Typography;\nconst { darkAlgorithm, defaultAlgorithm } = theme;", "theme algorithms");
 app = replaceOnce(
   app,
   `  const [nicknameValue, setNicknameValue] = useState("");
@@ -165,8 +166,8 @@ app = replaceOnce(
               </Button>`,
   "dark mode switch row"
 );
-app = replaceOnce(app, `          colorPrimary: "#1677ff",`, `          colorPrimary: "#1677ff",\n          colorBgBase: isDarkMode ? "#0f172a" : "#ffffff",\n          colorTextBase: isDarkMode ? "#e5edf8" : "#102033",`, "dark tokens");
 app = replaceOnce(app, `      theme={{\n        token: {`, `      theme={{\n        algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm,\n        token: {`, "theme algorithm property");
+app = replaceOnce(app, `          colorPrimary: "#1677ff",`, `          colorPrimary: "#1677ff",\n          colorBgBase: isDarkMode ? "#0f172a" : "#ffffff",\n          colorTextBase: isDarkMode ? "#e5edf8" : "#102033",`, "dark tokens");
 fs.writeFileSync(appPath, app);
 
 let css = fs.readFileSync(cssPath, "utf8");
@@ -268,7 +269,6 @@ watcherCss += `
   font-weight: 800;
 }
 
-.darkMode ~ .notificationWatcherControl,
 body:has(.darkMode) .notificationWatcherControl {
   border-color: rgba(96, 125, 166, 0.42);
   background: rgba(15, 23, 42, 0.86);
