@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Badge, Button, notification } from "antd";
-import { BellOutlined } from "@ant-design/icons";
 import { io } from "socket.io-client";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -182,7 +181,6 @@ export function NotificationWatcher() {
       <Badge count={unreadCount} size="small" offset={[-6, 4]}>
         <Button
           className="notificationWatcherButton"
-          icon={<BellOutlined />}
           disabled={!canAskPermission}
           onClick={requestPermission}
           type={permission === "granted" ? "default" : "primary"}
