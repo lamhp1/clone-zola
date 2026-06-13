@@ -36,6 +36,6 @@ Backend: `http://localhost:5000`
 
 ## Sticker Attribution
 
-Sticker artwork uses OpenMoji SVG assets via jsDelivr CDN.
+Sticker artwork uses Microsoft Fluent Emoji 3D assets from GitHub.
 
-All emojis designed by [OpenMoji](https://openmoji.org/) - the open-source emoji and icon project. License: [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+Fluent Emoji is a collection of familiar, friendly, and modern emoji from Microsoft. License: [MIT](https://github.com/microsoft/fluentui-emoji/blob/main/LICENSE).
