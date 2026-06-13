@@ -24,7 +24,26 @@ const conversationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Group",
       default: null
-    }
+    },
+    nicknames: [
+      {
+        owner: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true
+        },
+        target: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true
+        },
+        name: {
+          type: String,
+          trim: true,
+          maxlength: 80
+        }
+      }
+    ]
   },
   {
     timestamps: true
