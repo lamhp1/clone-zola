@@ -21,9 +21,23 @@ const messageSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["text"],
+      enum: ["text", "sticker"],
       default: "text"
     },
+    reactions: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true
+        },
+        icon: {
+          type: String,
+          required: true,
+          maxlength: 16
+        }
+      }
+    ],
     seenBy: [
       {
         type: mongoose.Schema.Types.ObjectId,
