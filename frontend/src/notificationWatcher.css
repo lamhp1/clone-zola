@@ -1,0 +1,17 @@
+.notificationWatcherButton {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 1200;
+  border-radius: 999px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+}
+
+@media (max-width: 720px) {
+  .notificationWatcherButton {
+    top: auto;
+    right: 14px;
+    bottom: 14px;
+    max-width: calc(100vw - 28px);
+  }
+}
