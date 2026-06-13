@@ -502,6 +502,42 @@ export function App() {
                 {!conversations.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có chat" /> : null}
               </div>
             </div>
+
+            <details className="friendsDetails">
+              <summary>
+                <span>Bạn bè & tạo nhóm</span>
+                <Tag>{friends.length}</Tag>
+              </summary>
+              <div className="friendsDetailsBody">
+              <div className="friendScroller">
+                {friends.map((friend) => (
+                  <button className="friendChip" type="button" key={friend._id} onClick={() => startChat(friend._id)}>
+                    <Avatar src={avatarUrl(friend, "U")}>{friend.name?.[0]}</Avatar>
+                    <span>{friend.name}</span>
+                  </button>
+                ))}
+                {!friends.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có bạn bè" /> : null}
+              </div>
+
+              <Divider />
+              <form className="groupCreateForm" onSubmit={handleCreateGroup}>
+                <Input
+                  value={groupName}
+                  onChange={(event) => setGroupName(event.target.value)}
+                  placeholder="Tên nhóm"
+                />
+                <Checkbox.Group
+                  className="friendCheckboxes"
+                  value={selectedFriendIds}
+                  onChange={setSelectedFriendIds}
+                  options={friends.map((friend) => ({ label: friend.name, value: friend._id }))}
+                />
+                <Button type="primary" htmlType="submit" block>
+                  Tạo nhóm
+                </Button>
+              </form>
+              </div>
+            </details>
           </aside>
 
           <section className="centerStage">
@@ -712,37 +748,6 @@ export function App() {
                   );
                 }}
               />
-            </Card>
-
-            <Card bordered={false} className="sideCard">
-              <Title level={5}>Bạn bè & tạo nhóm</Title>
-              <div className="friendScroller">
-                {friends.map((friend) => (
-                  <button className="friendChip" type="button" key={friend._id} onClick={() => startChat(friend._id)}>
-                    <Avatar src={avatarUrl(friend, "U")}>{friend.name?.[0]}</Avatar>
-                    <span>{friend.name}</span>
-                  </button>
-                ))}
-                {!friends.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có bạn bè" /> : null}
-              </div>
-
-              <Divider />
-              <form className="groupCreateForm" onSubmit={handleCreateGroup}>
-                <Input
-                  value={groupName}
-                  onChange={(event) => setGroupName(event.target.value)}
-                  placeholder="Tên nhóm"
-                />
-                <Checkbox.Group
-                  className="friendCheckboxes"
-                  value={selectedFriendIds}
-                  onChange={setSelectedFriendIds}
-                  options={friends.map((friend) => ({ label: friend.name, value: friend._id }))}
-                />
-                <Button type="primary" htmlType="submit" block>
-                  Tạo nhóm
-                </Button>
-              </form>
             </Card>
 
             {activeGroup ? (
