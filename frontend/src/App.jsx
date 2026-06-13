@@ -47,10 +47,10 @@ const { Text, Title } = Typography;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const statusLabels = {
-  none: "Chua ket ban",
-  sent: "Da gui loi moi",
-  received: "Dang cho phan hoi",
-  friends: "Ban be"
+  none: "Chưa kết bạn",
+  sent: "Đã gửi lời mời",
+  received: "Đang chờ phản hồi",
+  friends: "Bạn bè"
 };
 
 const relationColors = {
@@ -61,10 +61,32 @@ const relationColors = {
 };
 
 const reactionIcons = ["\u{1F44D}", "\u2764\uFE0F", "\u{1F602}", "\u{1F62E}", "\u{1F622}", "\u{1F64F}"];
-const stickerItems = ["1F600", "1F602", "1F970", "1F389", "1F525", "2728"].map((code) => ({
-  code,
-  url: `https://cdn.jsdelivr.net/gh/hfg-gmuend/openmoji@14.0.0/color/svg/${code}.svg`
-}));
+const stickerItems = [
+  {
+    label: "Cười tươi",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Grinning%20face/3D/grinning_face_3d.png"
+  },
+  {
+    label: "Cười ra nước mắt",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Face%20with%20tears%20of%20joy/3D/face_with_tears_of_joy_3d.png"
+  },
+  {
+    label: "Mặt cười tim",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Smiling%20face%20with%20hearts/3D/smiling_face_with_hearts_3d.png"
+  },
+  {
+    label: "Pháo giấy",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Party%20popper/3D/party_popper_3d.png"
+  },
+  {
+    label: "Lửa",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Fire/3D/fire_3d.png"
+  },
+  {
+    label: "Lấp lánh",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Sparkles/3D/sparkles_3d.png"
+  }
+];
 
 function avatarUrl(entity, fallback = "U") {
   return entity?.avatar || `https://placehold.co/120x120/1677ff/ffffff?text=${fallback}`;
@@ -76,7 +98,7 @@ function conversationTitle(conversation, user) {
   }
 
   if (conversation.type === "group") {
-    return conversation.group?.name || "Nhom chat";
+    return conversation.group?.name || "Nhóm chat";
   }
 
   const nickname = conversation.nicknames?.find(
@@ -85,12 +107,12 @@ function conversationTitle(conversation, user) {
       (item.target?._id || item.target) === conversation.otherUser?._id
   );
 
-  return nickname?.name || conversation.otherUser?.name || "Chat rieng";
+  return nickname?.name || conversation.otherUser?.name || "Chat riêng";
 }
 
 function lastMessagePreview(conversation) {
   if (!conversation.lastMessage) {
-    return "Chua co tin nhan";
+    return "Chưa có tin nhắn";
   }
 
   return conversation.lastMessage.type === "sticker" ? "Sticker" : conversation.lastMessage.content;
@@ -240,7 +262,7 @@ export function App() {
   async function handleAddFriend(resultId) {
     try {
       await sendFriendRequest(resultId);
-      setNotice("Da gui loi moi ket ban.");
+      setNotice("Đã gửi lời mời kết bạn.");
       await Promise.all([refreshSearch(), loadRequests()]);
     } catch (error) {
       setNotice(error.message);
@@ -293,7 +315,7 @@ export function App() {
       const data = await createGroup({ name: groupName, memberIds: selectedFriendIds });
       setGroupName("");
       setSelectedFriendIds([]);
-      setNotice("Da tao nhom.");
+      setNotice("Đã tạo nhóm.");
       await loadChatData();
       await selectConversation({
         id: data.group.conversation._id,
@@ -315,7 +337,7 @@ export function App() {
 
     socket.emit("message:send", { conversationId: activeConversation.id, content, type }, (response) => {
       if (!response?.ok) {
-        setNotice(response?.message || "Khong gui duoc tin nhan");
+        setNotice(response?.message || "Không gửi được tin nhắn");
       }
     });
   }
@@ -329,7 +351,7 @@ export function App() {
   function reactToMessage(messageId, icon) {
     socket?.emit("message:react", { messageId, icon }, (response) => {
       if (!response?.ok) {
-        setNotice(response?.message || "Khong tha duoc reaction");
+        setNotice(response?.message || "Không thả được cảm xúc");
       }
     });
   }
@@ -351,7 +373,7 @@ export function App() {
       setConversations((items) =>
         items.map((item) => (item.id === data.conversation.id ? data.conversation : item))
       );
-      setNotice("Da cap nhat ten goi nho.");
+      setNotice("Đã cập nhật tên gợi nhớ.");
     } catch (error) {
       setNotice(error.message);
     }
@@ -387,7 +409,7 @@ export function App() {
       {isLoading ? (
         <div className="loadingScreen">
           <Spin size="large" />
-          <Text type="secondary">Dang kiem tra phien dang nhap...</Text>
+          <Text type="secondary">Đang kiểm tra phiên đăng nhập...</Text>
         </div>
       ) : user ? (
         <section className="chatApp">
@@ -414,7 +436,7 @@ export function App() {
                 </div>
               </Flex>
               <Button block className="ghostButton" onClick={handleLogout}>
-                Dang xuat
+                Đăng xuất
               </Button>
             </Card>
 
@@ -425,7 +447,7 @@ export function App() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 onSearch={() => refreshSearch().catch((error) => setNotice(error.message))}
-                placeholder="Tim Gmail hoac userCode"
+                placeholder="Tìm Gmail, userCode hoặc tên gợi nhớ"
               />
             </form>
 
@@ -435,7 +457,7 @@ export function App() {
 
             <div className="railSection">
               <Flex justify="space-between" align="center">
-                <Text strong>Cuoc tro chuyen</Text>
+                <Text strong>Cuộc trò chuyện</Text>
                 <Tag>{conversations.length}</Tag>
               </Flex>
               <div className="conversationList">
@@ -462,7 +484,7 @@ export function App() {
                     </span>
                   </button>
                 ))}
-                {!conversations.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chua co chat" /> : null}
+                {!conversations.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có chat" /> : null}
               </div>
             </div>
           </aside>
@@ -485,15 +507,15 @@ export function App() {
                     <Title level={4}>{selectedConversationTitle}</Title>
                     <Text type="secondary">
                       {activeConversation.type === "group"
-                        ? `${activeGroup?.members?.length || 0} thanh vien`
+                        ? `${activeGroup?.members?.length || 0} thành viên`
                         : activeConversation.otherUser?.email}
                     </Text>
                   </div>
                 </Flex>
               ) : (
                 <div>
-                  <Title level={4}>Hay chon mot cuoc tro chuyen</Title>
-                  <Text type="secondary">Tin nhan, sticker, reaction va da xem se hien tai day.</Text>
+                  <Title level={4}>Hãy chọn một cuộc trò chuyện</Title>
+                  <Text type="secondary">Tin nhắn, sticker, reaction và đã xem sẽ hiển thị tại đây.</Text>
                 </div>
               )}
             </header>
@@ -520,10 +542,10 @@ export function App() {
                             ) : (
                               <p>{item.content}</p>
                             )}
-                            <Text className="senderName">{mine ? "Ban" : item.sender?.name || "Thanh vien"}</Text>
+                            <Text className="senderName">{mine ? "Bạn" : item.sender?.name || "Thành viên"}</Text>
                             <div className="reactionBar">
                               {reactionIcons.map((icon) => (
-                                <Tooltip title="Tha cam xuc" key={icon}>
+                                <Tooltip title="Thả cảm xúc" key={icon}>
                                   <button
                                     type="button"
                                     className="reactionButton"
@@ -541,17 +563,17 @@ export function App() {
                                 {reaction.icon}
                               </span>
                             ))}
-                            {seen ? <Text type="secondary">Da xem</Text> : null}
+                            {seen ? <Text type="secondary">Đã xem</Text> : null}
                           </Flex>
                         </div>
                       </article>
                     );
                   })
                 ) : (
-                  <Empty description="Chua co tin nhan. Gui loi chao dau tien di." />
+                  <Empty description="Chưa có tin nhắn. Gửi lời chào đầu tiên đi." />
                 )
               ) : (
-                <Empty description="Chon ban be, nhom hoac cuoc tro chuyen de bat dau." />
+                <Empty description="Chọn bạn bè, nhóm hoặc cuộc trò chuyện để bắt đầu." />
               )}
             </div>
 
@@ -559,13 +581,13 @@ export function App() {
               <footer className="composer">
                 <div className="stickerDock">
                   {stickerItems.map((sticker) => (
-                    <Tooltip title="Gui sticker" key={sticker.url}>
+                    <Tooltip title="Gửi sticker" key={sticker.url}>
                       <button
                         type="button"
                         className="stickerButton"
                         onClick={() => sendPayload(sticker.url, "sticker")}
                       >
-                        <img src={sticker.url} alt={`Sticker ${sticker.code}`} />
+                        <img src={sticker.url} alt={sticker.label} />
                       </button>
                     </Tooltip>
                   ))}
@@ -575,10 +597,10 @@ export function App() {
                     size="large"
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
-                    placeholder="Nhap tin nhan..."
+                    placeholder="Nhập tin nhắn..."
                   />
                   <Button size="large" type="primary" htmlType="submit">
-                    Gui
+                    Gửi
                   </Button>
                 </form>
               </footer>
@@ -587,16 +609,16 @@ export function App() {
 
           <aside className="rightPanel">
             <Card bordered={false} className="sideCard">
-              <Title level={5}>Tim ban be</Title>
+              <Title level={5}>Tìm bạn bè</Title>
               <List
                 dataSource={results}
-                locale={{ emptyText: "Nhap Gmail hoac userCode de tim" }}
+                locale={{ emptyText: "Nhập Gmail, userCode hoặc tên gợi nhớ để tìm" }}
                 renderItem={(result) => (
                   <List.Item
                     actions={[
                       result.relationshipStatus === "none" ? (
                         <Button size="small" type="primary" onClick={() => handleAddFriend(result.id)}>
-                          Ket ban
+                          Kết bạn
                         </Button>
                       ) : null
                     ]}
@@ -607,6 +629,9 @@ export function App() {
                       description={
                         <Space direction="vertical" size={2}>
                           <Text type="secondary">{result.email}</Text>
+                          {result.matchedNickname ? (
+                            <Text type="secondary">Tên gợi nhớ: {result.matchedNickname}</Text>
+                          ) : null}
                           <Tag color={relationColors[result.relationshipStatus]}>
                             {statusLabels[result.relationshipStatus]}
                           </Tag>
@@ -619,10 +644,10 @@ export function App() {
             </Card>
 
             <Card bordered={false} className="sideCard">
-              <Title level={5}>Loi moi ket ban</Title>
+              <Title level={5}>Lời mời kết bạn</Title>
               <List
                 dataSource={[...requests.incoming, ...requests.outgoing]}
-                locale={{ emptyText: "Khong co loi moi dang cho" }}
+                locale={{ emptyText: "Không có lời mời đang chờ" }}
                 renderItem={(request) => {
                   const incoming = Boolean(request.requester);
                   const person = incoming ? request.requester : request.recipient;
@@ -637,15 +662,15 @@ export function App() {
                       {incoming ? (
                         <Space>
                           <Button size="small" type="primary" onClick={() => handleRequestAction(acceptFriendRequest, request._id)}>
-                            Nhan
+                            Nhận
                           </Button>
                           <Button size="small" onClick={() => handleRequestAction(declineFriendRequest, request._id)}>
-                            Tu choi
+                            Từ chối
                           </Button>
                         </Space>
                       ) : (
                         <Button size="small" onClick={() => handleRequestAction(cancelFriendRequest, request._id)}>
-                          Huy
+                          Hủy
                         </Button>
                       )}
                     </List.Item>
@@ -655,7 +680,7 @@ export function App() {
             </Card>
 
             <Card bordered={false} className="sideCard">
-              <Title level={5}>Ban be & tao nhom</Title>
+              <Title level={5}>Bạn bè & tạo nhóm</Title>
               <div className="friendScroller">
                 {friends.map((friend) => (
                   <button className="friendChip" type="button" key={friend._id} onClick={() => startChat(friend._id)}>
@@ -663,7 +688,7 @@ export function App() {
                     <span>{friend.name}</span>
                   </button>
                 ))}
-                {!friends.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chua co ban be" /> : null}
+                {!friends.length ? <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có bạn bè" /> : null}
               </div>
 
               <Divider />
@@ -671,7 +696,7 @@ export function App() {
                 <Input
                   value={groupName}
                   onChange={(event) => setGroupName(event.target.value)}
-                  placeholder="Ten nhom"
+                  placeholder="Tên nhóm"
                 />
                 <Checkbox.Group
                   className="friendCheckboxes"
@@ -680,14 +705,14 @@ export function App() {
                   options={friends.map((friend) => ({ label: friend.name, value: friend._id }))}
                 />
                 <Button type="primary" htmlType="submit" block>
-                  Tao nhom
+                  Tạo nhóm
                 </Button>
               </form>
             </Card>
 
             {activeGroup ? (
               <Card bordered={false} className="sideCard">
-                <Title level={5}>Quan ly nhom</Title>
+                <Title level={5}>Quản lý nhóm</Title>
                 {isGroupAdmin ? (
                   <form
                     className="stackForm"
@@ -697,7 +722,7 @@ export function App() {
                     }}
                   >
                     <Input value={renameValue} onChange={(event) => setRenameValue(event.target.value)} />
-                    <Button htmlType="submit">Doi ten nhom</Button>
+                    <Button htmlType="submit">Đổi tên nhóm</Button>
                   </form>
                 ) : null}
 
@@ -708,7 +733,7 @@ export function App() {
                       actions={[
                         isGroupAdmin && member._id !== user._id ? (
                           <Button size="small" danger onClick={() => updateGroup(() => removeGroupMember(activeGroup._id, member._id))}>
-                            Xoa
+                            Xóa
                           </Button>
                         ) : null
                       ]}
@@ -717,7 +742,7 @@ export function App() {
                         avatar={<Avatar src={avatarUrl(member, "U")}>{member.name?.[0]}</Avatar>}
                         title={member.name}
                         description={
-                          activeGroup.admins.some((admin) => (admin._id || admin) === member._id) ? "Admin" : "Thanh vien"
+                          activeGroup.admins.some((admin) => (admin._id || admin) === member._id) ? "Admin" : "Thành viên"
                         }
                       />
                     </List.Item>
@@ -736,10 +761,10 @@ export function App() {
                     <Select
                       value={memberToAdd || undefined}
                       onChange={setMemberToAdd}
-                      placeholder="Chon ban be de them"
+                      placeholder="Chọn bạn bè để thêm"
                       options={addableFriends.map((friend) => ({ label: friend.name, value: friend._id }))}
                     />
-                    <Button htmlType="submit">Them thanh vien</Button>
+                    <Button htmlType="submit">Thêm thành viên</Button>
                   </form>
                 ) : null}
 
@@ -756,23 +781,23 @@ export function App() {
                     })
                   }
                 >
-                  Roi nhom
+                  Rời nhóm
                 </Button>
               </Card>
             ) : activeConversation?.otherUser ? (
               <Card bordered={false} className="sideCard">
-                <Title level={5}>Ten goi nho</Title>
+                <Title level={5}>Tên gợi nhớ</Title>
                 <form className="stackForm" onSubmit={saveNickname}>
                   <Input
                     value={nicknameValue}
                     onChange={(event) => setNicknameValue(event.target.value)}
-                    placeholder="Nhap ten goi nho"
+                    placeholder="Nhập tên gợi nhớ"
                   />
                   <Button type="primary" htmlType="submit">
-                    Luu ten
+                    Lưu tên
                   </Button>
                 </form>
-                <Text type="secondary">Ten nay chi hien thi voi tai khoan cua ban.</Text>
+                <Text type="secondary">Tên này chỉ hiển thị với tài khoản của bạn.</Text>
               </Card>
             ) : null}
           </aside>
@@ -783,16 +808,16 @@ export function App() {
             <Text className="eyebrow">Realtime social chat</Text>
             <Title>Clone Zola Chat</Title>
             <Text>
-              Giao dien moi gon, hien dai va san sang cho chat ca nhan, nhom, sticker,
-              reaction va trang thai da xem.
+              Giao diện mới gọn, hiện đại và sẵn sàng cho chat cá nhân, nhóm, sticker,
+              reaction và trạng thái đã xem.
             </Text>
             <Button size="large" type="primary" href={getGoogleLoginUrl()}>
-              Dang nhap bang Google
+              Đăng nhập bằng Google
             </Button>
           </div>
           <Card className="heroPreview" bordered={false}>
-            <div className="previewBubble left">Xin chao, hom nay trien khai UI moi nhe.</div>
-            <div className="previewBubble right">Qua dep. Gui sticker luon!</div>
+            <div className="previewBubble left">Xin chào, hôm nay triển khai UI mới nhé.</div>
+            <div className="previewBubble right">Quá đẹp. Gửi sticker luôn!</div>
             <img src={stickerItems[2].url} alt="Preview sticker" />
           </Card>
         </section>
