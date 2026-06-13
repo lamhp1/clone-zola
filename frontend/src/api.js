@@ -1,43 +1,13 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
-const AUTH_TOKEN_KEY = "clone_zola_auth_token";
-
-export function getStoredAuthToken() {
-  return localStorage.getItem(AUTH_TOKEN_KEY);
-}
-
-export function clearStoredAuthToken() {
-  localStorage.removeItem(AUTH_TOKEN_KEY);
-}
-
-export function consumeAuthTokenFromUrl() {
-  const url = new URL(window.location.href);
-  const token = url.searchParams.get("token");
-
-  if (!token) {
-    return getStoredAuthToken();
-  }
-
-  localStorage.setItem(AUTH_TOKEN_KEY, token);
-  url.searchParams.delete("token");
-  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}` || "/");
-  return token;
-}
-
-function authHeaders(headers = {}) {
-  const token = getStoredAuthToken();
-
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...headers
-  };
-}
 
 async function request(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     credentials: "include",
-    ...options,
-    headers: authHeaders(options.headers)
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers
+    },
+    ...options
   });
 
   const data = await response.json().catch(() => ({}));
@@ -54,15 +24,11 @@ export function getGoogleLoginUrl() {
 }
 
 export async function fetchCurrentUser() {
-  consumeAuthTokenFromUrl();
-
   const response = await fetch(`${API_URL}/api/auth/me`, {
-    credentials: "include",
-    headers: authHeaders()
+    credentials: "include"
   });
 
   if (!response.ok) {
-    clearStoredAuthToken();
     return null;
   }
 
@@ -71,13 +37,9 @@ export async function fetchCurrentUser() {
 }
 
 export async function logout() {
-  try {
-    await request("/api/auth/logout", {
-      method: "POST"
-    });
-  } finally {
-    clearStoredAuthToken();
-  }
+  await request("/api/auth/logout", {
+    method: "POST"
+  });
 }
 
 export async function searchUsers(query) {
@@ -131,6 +93,13 @@ export async function startDirectConversation(friendId) {
 
 export async function fetchMessages(conversationId) {
   return request(`/api/conversations/${conversationId}/messages`);
+}
+
+export async function updateConversationNickname(conversationId, targetUserId, name) {
+  return request(`/api/conversations/${conversationId}/nickname`, {
+    method: "PATCH",
+    body: JSON.stringify({ targetUserId, name })
+  });
 }
 
 export async function createGroup(payload) {
