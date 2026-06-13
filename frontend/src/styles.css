@@ -650,3 +650,87 @@ textarea {
     align-content: center;
   }
 }
+
+
+.themeToggleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #f7fbff;
+  border: 1px solid rgba(205, 218, 235, 0.74);
+}
+
+.appShell.darkMode {
+  color: #e5edf8;
+  background:
+    radial-gradient(circle at top left, rgba(59, 130, 246, 0.2), transparent 34rem),
+    linear-gradient(135deg, #08111f 0%, #0f172a 52%, #111827 100%);
+}
+
+.darkMode .centerStage,
+.darkMode .profileCard,
+.darkMode .sideCard,
+.darkMode .railSection,
+.darkMode .friendsDetails,
+.darkMode .topBar,
+.darkMode .composer {
+  border-color: rgba(96, 125, 166, 0.42);
+  background: rgba(15, 23, 42, 0.78);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.26);
+}
+
+.darkMode .centerStage {
+  background:
+    linear-gradient(rgba(15, 23, 42, 0.86), rgba(15, 23, 42, 0.9)),
+    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.14), transparent 24rem);
+}
+
+.darkMode .bubble {
+  color: #e5edf8;
+  background: #111827;
+  border-color: rgba(96, 125, 166, 0.46);
+}
+
+.darkMode .bubble.mine {
+  color: #ffffff;
+  background: linear-gradient(135deg, #1677ff, #0f5fce);
+}
+
+.darkMode .conversationItem,
+.darkMode .friendChip,
+.darkMode .themeToggleRow,
+.darkMode .friendCheckboxes {
+  color: #e5edf8;
+  background: rgba(15, 23, 42, 0.66);
+  border-color: rgba(96, 125, 166, 0.42);
+}
+
+.darkMode .conversationItem small,
+.darkMode .profileCopy .ant-typography-secondary,
+.darkMode .senderName,
+.darkMode .friendsDetails summary {
+  color: #a8b6cb;
+}
+
+.darkMode .conversationItem:hover,
+.darkMode .friendChip:hover,
+.darkMode .conversationItem.active {
+  background: rgba(59, 130, 246, 0.18);
+}
+
+.darkMode .ghostButton,
+.darkMode .friendsDetails summary::after {
+  color: #bfdbfe;
+  background: rgba(59, 130, 246, 0.16);
+}
+
+.darkMode .stickerPicker,
+.darkMode .stickerButton,
+.darkMode .reactionButton,
+.darkMode .reactionPill {
+  background: #111827;
+  border-color: rgba(96, 125, 166, 0.46);
+}

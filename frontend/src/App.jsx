@@ -16,9 +16,11 @@ import {
   Select,
   Space,
   Spin,
+  Switch,
   Tag,
   Tooltip,
-  Typography
+  Typography,
+  theme
 } from "antd";
 import { io } from "socket.io-client";
 import {
@@ -45,6 +47,7 @@ import {
 } from "./api.js";
 
 const { Text, Title } = Typography;
+const { darkAlgorithm, defaultAlgorithm } = theme;
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const statusLabels = {
@@ -162,6 +165,9 @@ export function App() {
   const [memberToAdd, setMemberToAdd] = useState("");
   const [renameValue, setRenameValue] = useState("");
   const [nicknameValue, setNicknameValue] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(() =>
+    typeof window === "undefined" ? false : localStorage.getItem("clone-zola-theme") === "dark"
+  );
   const messagesRef = useRef(null);
 
   const isGroupAdmin = useMemo(
@@ -177,6 +183,10 @@ export function App() {
     activeConversation?.type === "group"
       ? activeGroup?.name || conversationTitle(activeConversation, user)
       : conversationTitle(activeConversation, user);
+
+  useEffect(() => {
+    localStorage.setItem("clone-zola-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
 
   async function loadRequests() {
     setRequests(await fetchFriendRequests());
@@ -430,7 +440,7 @@ export function App() {
   }
 
   const app = (
-    <main className="appShell">
+    <main className={["appShell", isDarkMode ? "darkMode" : ""].filter(Boolean).join(" ")}>
       {isLoading ? (
         <div className="loadingScreen">
           <Spin size="large" />
@@ -460,6 +470,10 @@ export function App() {
                   <Tag color="blue">ID {user.userCode}</Tag>
                 </div>
               </Flex>
+              <div className="themeToggleRow">
+                <Text>Chế độ tối</Text>
+                <Switch checked={isDarkMode} onChange={setIsDarkMode} checkedChildren="Tối" unCheckedChildren="Sáng" />
+              </div>
               <Button block className="ghostButton" onClick={handleLogout}>
                 Đăng xuất
               </Button>
@@ -868,8 +882,11 @@ export function App() {
   return (
     <ConfigProvider
       theme={{
+        algorithm: isDarkMode ? darkAlgorithm : defaultAlgorithm,
         token: {
           colorPrimary: "#1677ff",
+          colorBgBase: isDarkMode ? "#0f172a" : "#ffffff",
+          colorTextBase: isDarkMode ? "#e5edf8" : "#102033",
           borderRadius: 14,
           fontFamily:
             "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"

@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Badge, Button, notification } from "antd";
+import { useEffect, useRef, useState } from "react";
+import { Badge, notification, Switch } from "antd";
 import { io } from "socket.io-client";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -41,26 +41,13 @@ export function NotificationWatcher() {
   const [api, contextHolder] = notification.useNotification();
   const [user, setUser] = useState(null);
   const [permission, setPermission] = useState(getNotificationPermission);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() =>
+    typeof window === "undefined" ? true : localStorage.getItem("clone-zola-notifications") !== "off"
+  );
   const [unreadCount, setUnreadCount] = useState(0);
   const notifiedMessagesRef = useRef(new Set());
   const userRef = useRef(null);
 
-  const canAskPermission = permission !== "granted" && permission !== "unsupported";
-  const buttonLabel = useMemo(() => {
-    if (permission === "granted") {
-      return "Thông báo đã bật";
-    }
-
-    if (permission === "denied") {
-      return "Thông báo đang bị chặn";
-    }
-
-    if (permission === "unsupported") {
-      return "Không hỗ trợ thông báo";
-    }
-
-    return "Bật thông báo";
-  }, [permission]);
 
   useEffect(() => {
     userRef.current = user;
@@ -113,6 +100,10 @@ export function NotificationWatcher() {
         return;
       }
 
+      if (!notificationsEnabled) {
+        return;
+      }
+
       notifiedMessagesRef.current.add(messageId);
       const senderName = getSenderName(lastMessage);
       const preview = getContentPreview(lastMessage);
@@ -142,7 +133,7 @@ export function NotificationWatcher() {
     return () => {
       socket.disconnect();
     };
-  }, [api, user?._id]);
+  }, [api, notificationsEnabled, user?._id]);
 
   useEffect(() => {
     document.title = unreadCount > 0 ? `(${unreadCount}) ${DEFAULT_TITLE}` : DEFAULT_TITLE;
@@ -156,19 +147,35 @@ export function NotificationWatcher() {
     };
   }, [unreadCount]);
 
-  async function requestPermission() {
+  async function toggleNotifications(checked) {
+    setNotificationsEnabled(checked);
+    localStorage.setItem("clone-zola-notifications", checked ? "on" : "off");
+
+    if (!checked) {
+      setUnreadCount(0);
+      api.info({ message: "Đã tắt thông báo tin nhắn." });
+      return;
+    }
+
     if (getNotificationPermission() === "unsupported") {
       setPermission("unsupported");
       api.info({ message: "Trình duyệt này chưa hỗ trợ thông báo." });
       return;
     }
 
-    const nextPermission = await Notification.requestPermission();
-    setPermission(nextPermission);
+    if (getNotificationPermission() !== "granted") {
+      const nextPermission = await Notification.requestPermission();
+      setPermission(nextPermission);
 
-    api.info({
-      message: nextPermission === "granted" ? "Đã bật thông báo tin nhắn." : "Bạn chưa cấp quyền thông báo."
-    });
+      if (nextPermission !== "granted") {
+        setNotificationsEnabled(false);
+        localStorage.setItem("clone-zola-notifications", "off");
+        api.info({ message: "Bạn chưa cấp quyền thông báo." });
+        return;
+      }
+    }
+
+    api.info({ message: "Đã bật thông báo tin nhắn." });
   }
 
   if (!user) {
@@ -178,16 +185,18 @@ export function NotificationWatcher() {
   return (
     <>
       {contextHolder}
-      <Badge count={unreadCount} size="small" offset={[-6, 4]}>
-        <Button
-          className="notificationWatcherButton"
-          disabled={!canAskPermission}
-          onClick={requestPermission}
-          type={permission === "granted" ? "default" : "primary"}
-        >
-          {buttonLabel}
-        </Button>
-      </Badge>
+      <div className="notificationWatcherControl">
+        <span>Thông báo</span>
+        <Badge count={unreadCount} size="small" offset={[2, -2]}>
+          <Switch
+            checked={notificationsEnabled && permission !== "unsupported"}
+            checkedChildren="Bật"
+            unCheckedChildren="Tắt"
+            disabled={permission === "unsupported"}
+            onChange={toggleNotifications}
+          />
+        </Badge>
+      </div>
     </>
   );
 }
