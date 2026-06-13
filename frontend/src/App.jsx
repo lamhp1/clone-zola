@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Avatar,
@@ -8,6 +8,7 @@ import {
   Checkbox,
   ConfigProvider,
   Divider,
+  Dropdown,
   Empty,
   Flex,
   Input,
@@ -75,6 +76,22 @@ const stickerItems = [
     url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Smiling%20face%20with%20hearts/3D/smiling_face_with_hearts_3d.png"
   },
   {
+    label: "Hôn gió",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Face%20blowing%20a%20kiss/3D/face_blowing_a_kiss_3d.png"
+  },
+  {
+    label: "Ôm nè",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Hugging%20face/3D/hugging_face_3d.png"
+  },
+  {
+    label: "Mắt long lanh",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Pleading%20face/3D/pleading_face_3d.png"
+  },
+  {
+    label: "Mắt sao",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Star-struck/3D/star-struck_3d.png"
+  },
+  {
     label: "Pháo giấy",
     url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Party%20popper/3D/party_popper_3d.png"
   },
@@ -85,6 +102,14 @@ const stickerItems = [
   {
     label: "Lấp lánh",
     url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Sparkles/3D/sparkles_3d.png"
+  },
+  {
+    label: "Trái tim",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Red%20heart/3D/red_heart_3d.png"
+  },
+  {
+    label: "Nơ hồng",
+    url: "https://raw.githubusercontent.com/microsoft/fluentui-emoji/main/assets/Ribbon/3D/ribbon_3d.png"
   }
 ];
 
@@ -242,7 +267,7 @@ export function App() {
     }
   }, [socket, activeConversation]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const node = messagesRef.current;
     if (node) {
       node.scrollTop = node.scrollHeight;
@@ -416,7 +441,7 @@ export function App() {
           <aside className="leftRail">
             <div className="brandBlock">
               <div className="brandMark">Z</div>
-              <div>
+              <div className="brandText">
                 <Text className="eyebrow">Realtime workspace</Text>
                 <Title level={3}>Clone Zola</Title>
               </div>
@@ -440,16 +465,6 @@ export function App() {
               </Button>
             </Card>
 
-            <form className="searchForm" onSubmit={handleSearch}>
-              <Input.Search
-                allowClear
-                size="large"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                onSearch={() => refreshSearch().catch((error) => setNotice(error.message))}
-                placeholder="Tìm Gmail, userCode hoặc tên gợi nhớ"
-              />
-            </form>
 
             {notice ? (
               <Alert className="noticeAlert" type="info" showIcon closable message={notice} onClose={() => setNotice("")} />
@@ -579,20 +594,30 @@ export function App() {
 
             {activeConversation ? (
               <footer className="composer">
-                <div className="stickerDock">
-                  {stickerItems.map((sticker) => (
-                    <Tooltip title="Gửi sticker" key={sticker.url}>
-                      <button
-                        type="button"
-                        className="stickerButton"
-                        onClick={() => sendPayload(sticker.url, "sticker")}
-                      >
-                        <img src={sticker.url} alt={sticker.label} />
-                      </button>
-                    </Tooltip>
-                  ))}
-                </div>
                 <form className="composerForm" onSubmit={sendMessage}>
+                  <Dropdown
+                    trigger={["click"]}
+                    placement="topLeft"
+                    dropdownRender={() => (
+                      <div className="stickerPicker">
+                        {stickerItems.map((sticker) => (
+                          <Tooltip title={sticker.label} key={sticker.url}>
+                            <button
+                              type="button"
+                              className="stickerButton"
+                              onClick={() => sendPayload(sticker.url, "sticker")}
+                            >
+                              <img src={sticker.url} alt={sticker.label} />
+                            </button>
+                          </Tooltip>
+                        ))}
+                      </div>
+                    )}
+                  >
+                    <Button size="large" type="default" htmlType="button">
+                      Sticker
+                    </Button>
+                  </Dropdown>
                   <Input
                     size="large"
                     value={draft}
@@ -610,6 +635,16 @@ export function App() {
           <aside className="rightPanel">
             <Card bordered={false} className="sideCard">
               <Title level={5}>Tìm bạn bè</Title>
+              <form className="searchForm" onSubmit={handleSearch}>
+                <Input.Search
+                  allowClear
+                  size="large"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  onSearch={() => refreshSearch().catch((error) => setNotice(error.message))}
+                  placeholder="Tìm Gmail, userCode hoặc tên gợi nhớ"
+                />
+              </form>
               <List
                 dataSource={results}
                 locale={{ emptyText: "Nhập Gmail, userCode hoặc tên gợi nhớ để tìm" }}

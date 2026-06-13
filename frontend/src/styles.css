@@ -82,7 +82,7 @@ textarea {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 4px 4px;
+  padding: 8px 4px 4px;
 }
 
 .brandMark {
@@ -96,6 +96,17 @@ textarea {
   font-weight: 900;
   background: linear-gradient(135deg, #1677ff, #12c2e9);
   box-shadow: 0 14px 28px rgba(22, 119, 255, 0.26);
+}
+
+.brandText {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+}
+
+.brandText h3.ant-typography {
+  line-height: 1;
 }
 
 .eyebrow {
@@ -144,6 +155,7 @@ textarea {
 
 .searchForm {
   display: block;
+  margin-bottom: 14px;
 }
 
 .noticeAlert {
@@ -233,7 +245,6 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  scroll-behavior: smooth;
 }
 
 .messageCanvas::-webkit-scrollbar,
@@ -361,19 +372,23 @@ textarea {
 }
 
 .composer {
-  display: grid;
-  gap: 12px;
-  padding: 14px 18px 18px;
+  display: block;
+  padding: 10px 16px 12px;
   border-top: 1px solid rgba(205, 218, 235, 0.72);
   background: rgba(255, 255, 255, 0.84);
   backdrop-filter: blur(16px);
 }
 
-.stickerDock {
-  display: flex;
+.stickerPicker {
+  width: 286px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 10px;
+  border: 1px solid rgba(205, 218, 235, 0.9);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 46px rgba(35, 69, 109, 0.16);
 }
 
 .stickerButton {
@@ -411,7 +426,9 @@ textarea {
 }
 
 .composerForm {
-  grid-template-columns: 1fr auto;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
 }
 
 .rightPanel .ant-card-body {
