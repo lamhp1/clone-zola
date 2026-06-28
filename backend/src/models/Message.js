@@ -15,15 +15,38 @@ const messageSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
+      default: "",
+      trim: true,
+      maxlength: 4000
+    },
+    text: {
+      type: String,
+      default: "",
       trim: true,
       maxlength: 4000
     },
     type: {
       type: String,
-      enum: ["text", "sticker"],
+      enum: ["text", "image", "mixed", "sticker"],
       default: "text"
     },
+    images: [
+      {
+        _id: false,
+        url: {
+          type: String,
+          required: true
+        },
+        public_id: {
+          type: String,
+          required: true
+        },
+        width: Number,
+        height: Number,
+        format: String,
+        bytes: Number
+      }
+    ],
     reactions: [
       {
         user: {

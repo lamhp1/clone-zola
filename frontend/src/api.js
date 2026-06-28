@@ -95,6 +95,30 @@ export async function fetchMessages(conversationId) {
   return request(`/api/conversations/${conversationId}/messages`);
 }
 
+export async function sendConversationMessage(conversationId, { text, images = [] }) {
+  const formData = new FormData();
+  if (text?.trim()) {
+    formData.append("text", text.trim());
+  }
+
+  images.forEach((image) => {
+    formData.append("images", image);
+  });
+
+  const response = await fetch(`${API_URL}/api/conversations/${conversationId}/messages`, {
+    method: "POST",
+    credentials: "include",
+    body: formData
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.message || "Could not send message");
+  }
+
+  return data;
+}
+
 export async function updateConversationNickname(conversationId, targetUserId, name) {
   return request(`/api/conversations/${conversationId}/nickname`, {
     method: "PATCH",

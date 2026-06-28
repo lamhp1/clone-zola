@@ -9,11 +9,12 @@ const httpServer = http.createServer(app);
 
 const io = new Server(httpServer, {
   cors: {
-    origin: env.clientUrl,
+    origin: env.clientUrls,
     credentials: true
   }
 });
 
+app.set("io", io);
 registerSocketHandlers(io);
 
 httpServer.listen(env.port, "0.0.0.0", () => {

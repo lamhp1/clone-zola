@@ -33,5 +33,10 @@ export const env = {
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
   googleCallbackUrl:
     trimTrailingSlash(process.env.GOOGLE_CALLBACK_URL) ||
-    "http://localhost:5000/api/auth/google/callback"
+    "http://localhost:5000/api/auth/google/callback",
+  cloudinary: {
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    apiSecret: process.env.CLOUDINARY_API_SECRET
+  }
 };

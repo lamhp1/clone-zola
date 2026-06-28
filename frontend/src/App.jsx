@@ -216,7 +216,12 @@ export function App() {
           loadChatData();
         }
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        setIsLoading(false);
+        if (window.location.pathname === "/auth/callback") {
+          window.history.replaceState({}, document.title, "/");
+        }
+      });
   }, []);
 
   useEffect(() => {

@@ -302,6 +302,44 @@ textarea {
   overflow-wrap: anywhere;
 }
 
+.imageGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+  width: min(320px, 64vw);
+}
+
+.imageGrid.count1 {
+  grid-template-columns: 1fr;
+}
+
+.messageImageButton {
+  border: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: transparent;
+  cursor: zoom-in;
+  padding: 0;
+  aspect-ratio: 1 / 1;
+}
+
+.imageGrid.count1 .messageImageButton {
+  aspect-ratio: auto;
+}
+
+.messageImageButton img {
+  width: 100%;
+  height: 100%;
+  max-height: 280px;
+  display: block;
+  object-fit: cover;
+}
+
+.imageGrid.count1 .messageImageButton img {
+  height: auto;
+  object-fit: contain;
+}
+
 .senderName {
   display: block;
   font-size: 0.72rem;
@@ -439,9 +477,72 @@ textarea {
 }
 
 .composerForm {
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
+}
+
+.hiddenFileInput {
+  display: none;
+}
+
+.selectedImagePreview,
+.sendingStatus {
+  grid-column: 1 / -1;
+}
+
+.selectedImagePreview {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0 6px;
+}
+
+.selectedImageItem {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  flex: 0 0 auto;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(205, 218, 235, 0.82);
+  background: #ffffff;
+}
+
+.selectedImageItem img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.selectedImageItem button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 999px;
+  color: #ffffff;
+  background: rgba(15, 23, 42, 0.74);
+  cursor: pointer;
+}
+
+.sendingStatus {
+  font-size: 0.82rem;
+}
+
+.imageLightbox .ant-modal-content {
+  padding: 12px;
+}
+
+.imageLightbox img {
+  width: 100%;
+  max-height: 82vh;
+  display: block;
+  object-fit: contain;
+  border-radius: 12px;
 }
 
 .rightPanel .ant-card-body {
@@ -642,6 +743,10 @@ textarea {
     max-width: 86%;
   }
 
+  .imageGrid {
+    width: min(280px, 72vw);
+  }
+
   .composerForm {
     grid-template-columns: 1fr;
   }
@@ -697,6 +802,11 @@ textarea {
 .darkMode .bubble.mine {
   color: #ffffff;
   background: linear-gradient(135deg, #1677ff, #0f5fce);
+}
+
+.darkMode .selectedImageItem {
+  background: #111827;
+  border-color: rgba(96, 125, 166, 0.46);
 }
 
 .darkMode .conversationItem,

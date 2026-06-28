@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import { cloudinary } from "../config/cloudinary.js";
+import { env } from "../config/env.js";
 import { Conversation } from "../models/Conversation.js";
 import { Message } from "../models/Message.js";
 import { User } from "../models/User.js";
@@ -7,6 +9,7 @@ import {
   getOrCreateDirectConversation,
   userCanAccessConversation
 } from "../utils/conversations.js";
+import { getMessageType, serializeMessage } from "../utils/messages.js";
 
 function serializeConversation(conversation, currentUserId) {
   const otherParticipant =
@@ -92,8 +95,114 @@ export async function listMessages(req, res, next) {
       .populate("sender", "name email avatar userCode")
       .sort({ createdAt: 1 })
       .limit(80);
-    res.json({ messages });
+    res.json({ messages: messages.map(serializeMessage) });
   } catch (error) {
+    next(error);
+  }
+}
+
+function uploadImage(file) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "zalo-clone/chat-images",
+        resource_type: "image"
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        const url = cloudinary.url(result.public_id, {
+          secure: true,
+          resource_type: "image",
+          transformation: [{ fetch_format: "auto", quality: "auto" }]
+        });
+
+        resolve({
+          url: url || result.secure_url,
+          public_id: result.public_id,
+          width: result.width,
+          height: result.height,
+          format: result.format,
+          bytes: result.bytes
+        });
+      }
+    );
+
+    stream.end(file.buffer);
+  });
+}
+
+async function deleteUploadedImages(images) {
+  await Promise.allSettled(images.map((image) => cloudinary.uploader.destroy(image.public_id)));
+}
+
+export async function createMessage(req, res, next) {
+  const uploadedImages = [];
+  let createdMessageId = null;
+
+  try {
+    const conversation = await Conversation.findById(req.params.id);
+    if (!conversation || !userCanAccessConversation(conversation, req.user._id)) {
+      return res.status(404).json({ message: "Conversation not found" });
+    }
+
+    const text = String(req.body.text || req.body.content || "").trim();
+    const files = req.files || [];
+    if (!text && !files.length) {
+      return res.status(400).json({ message: "Message text or image is required" });
+    }
+
+    if (files.length) {
+      const hasCloudinaryConfig =
+        env.cloudinary.cloudName && env.cloudinary.apiKey && env.cloudinary.apiSecret;
+      if (!hasCloudinaryConfig) {
+        return res.status(500).json({ message: "Cloudinary is not configured" });
+      }
+
+      for (const file of files) {
+        uploadedImages.push(await uploadImage(file));
+      }
+    }
+
+    const message = await Message.create({
+      conversation: conversation._id,
+      sender: req.user._id,
+      content: text,
+      text,
+      type: getMessageType(text, uploadedImages),
+      images: uploadedImages,
+      seenBy: [req.user._id]
+    });
+    createdMessageId = message._id;
+
+    conversation.lastMessage = message._id;
+    await conversation.save();
+
+    const populatedMessage = await Message.findById(message._id).populate("sender", "name email avatar userCode");
+    const serialized = serializeMessage(populatedMessage);
+    const io = req.app.get("io");
+    if (io) {
+      io.to(`conversation:${conversation._id}`).emit("message:new", serialized);
+      conversation.participants.forEach((participantId) => {
+        io.to(`user:${participantId}`).emit("conversation:updated", {
+          conversationId: conversation._id,
+          lastMessage: serialized,
+          updatedAt: conversation.updatedAt
+        });
+      });
+    }
+
+    res.status(201).json({ message: serialized });
+  } catch (error) {
+    if (createdMessageId) {
+      await Message.findByIdAndDelete(createdMessageId).catch(() => {});
+    }
+    if (uploadedImages.length) {
+      await deleteUploadedImages(uploadedImages);
+    }
     next(error);
   }
 }

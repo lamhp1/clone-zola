@@ -4,6 +4,7 @@ import { Message } from "./models/Message.js";
 import { User } from "./models/User.js";
 import { env } from "./config/env.js";
 import { userCanAccessConversation } from "./utils/conversations.js";
+import { getMessageType, serializeMessage } from "./utils/messages.js";
 
 function parseCookie(header = "") {
   return header.split(";").reduce((cookies, part) => {
@@ -33,20 +34,6 @@ async function authenticateSocket(socket, next) {
   }
 }
 
-function serializeMessage(message) {
-  return {
-    id: message._id,
-    conversation: message.conversation,
-    sender: message.sender,
-    content: message.content,
-    type: message.type,
-    reactions: message.reactions,
-    seenBy: message.seenBy,
-    createdAt: message.createdAt,
-    updatedAt: message.updatedAt
-  };
-}
-
 export function registerSocketHandlers(io) {
   io.use(authenticateSocket);
 
@@ -68,21 +55,27 @@ export function registerSocketHandlers(io) {
       }
     });
 
-    socket.on("message:send", async ({ conversationId, content, type = "text" }, callback) => {
+    socket.on("message:send", async ({ conversationId, content, images = [], type = "text" }, callback) => {
       try {
         const trimmedContent = String(content || "").trim();
-        if (!trimmedContent) return callback?.({ ok: false, message: "Message content is required" });
-        if (!["text", "sticker"].includes(type)) return callback?.({ ok: false, message: "Unsupported message type" });
+        const safeImages = Array.isArray(images)
+          ? images.filter((image) => image?.url && image?.public_id)
+          : [];
+        if (!trimmedContent && !safeImages.length) return callback?.({ ok: false, message: "Message content is required" });
+        if (!["text", "image", "mixed", "sticker"].includes(type)) return callback?.({ ok: false, message: "Unsupported message type" });
         const conversation = await Conversation.findById(conversationId);
         if (!conversation || !userCanAccessConversation(conversation, socket.user._id)) {
           callback?.({ ok: false, message: "Conversation not found" });
           return;
         }
+        const messageType = type === "sticker" ? "sticker" : getMessageType(trimmedContent, safeImages);
         const message = await Message.create({
           conversation: conversation._id,
           sender: socket.user._id,
           content: trimmedContent,
-          type,
+          text: type === "sticker" ? "" : trimmedContent,
+          type: messageType,
+          images: safeImages,
           seenBy: [socket.user._id]
         });
         conversation.lastMessage = message._id;
