@@ -13,6 +13,7 @@ import {
   Flex,
   Input,
   List,
+  Modal,
   Select,
   Space,
   Spin,
@@ -41,6 +42,7 @@ import {
   removeGroupMember,
   renameGroup,
   searchUsers,
+  sendConversationMessage,
   sendFriendRequest,
   startDirectConversation,
   updateConversationNickname
@@ -143,7 +145,10 @@ function lastMessagePreview(conversation) {
     return "Chưa có tin nhắn";
   }
 
-  return conversation.lastMessage.type === "sticker" ? "Sticker" : conversation.lastMessage.content;
+  if (conversation.lastMessage.type === "sticker") return "Sticker";
+  if (conversation.lastMessage.type === "image" || conversation.lastMessage.type === "mixed") return "Hình ảnh";
+  
+  return conversation.lastMessage.content;
 }
 
 export function App() {
@@ -165,6 +170,10 @@ export function App() {
   const [memberToAdd, setMemberToAdd] = useState("");
   const [renameValue, setRenameValue] = useState("");
   const [nicknameValue, setNicknameValue] = useState("");
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [isSending, setIsSending] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const imageInputRef = useRef(null);
   const [isDarkMode, setIsDarkMode] = useState(() =>
     typeof window === "undefined" ? false : localStorage.getItem("clone-zola-theme") === "dark"
   );
@@ -382,10 +391,65 @@ export function App() {
     });
   }
 
-  function sendMessage(event) {
+  function handleImageSelect(event) {
+    const files = Array.from(event.target.files);
+    const validImages = files.filter((file) => {
+      const isValidType = ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type);
+      const isValidSize = file.size <= 5 * 1024 * 1024;
+      if (!isValidType) setNotice(`File ${file.name} không đúng định dạng ảnh.`);
+      if (!isValidSize) setNotice(`File ${file.name} vượt quá 5MB.`);
+      return isValidType && isValidSize;
+    });
+
+    if (selectedImages.length + validImages.length > 10) {
+      setNotice("Chỉ được gửi tối đa 10 ảnh mỗi lần.");
+      return;
+    }
+
+    const newImages = validImages.map((file) => ({
+      file,
+      previewUrl: URL.createObjectURL(file)
+    }));
+
+    setSelectedImages((prev) => [...prev, ...newImages]);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+  }
+
+  function removeSelectedImage(indexToRemove) {
+    setSelectedImages((prev) => {
+      const item = prev[indexToRemove];
+      if (item?.previewUrl) {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+      return prev.filter((_, index) => index !== indexToRemove);
+    });
+  }
+
+  async function sendMessage(event) {
     event.preventDefault();
-    sendPayload(draft);
-    setDraft("");
+    if (!draft.trim() && selectedImages.length === 0) return;
+
+    if (selectedImages.length > 0) {
+      setIsSending(true);
+      try {
+        await sendConversationMessage(activeConversation.id, {
+          text: draft,
+          images: selectedImages.map((img) => img.file)
+        });
+        setDraft("");
+        selectedImages.forEach((img) => URL.revokeObjectURL(img.previewUrl));
+        setSelectedImages([]);
+      } catch (error) {
+        setNotice(error.message);
+      } finally {
+        setIsSending(false);
+      }
+    } else {
+      sendPayload(draft);
+      setDraft("");
+    }
   }
 
   function reactToMessage(messageId, icon) {
@@ -452,6 +516,17 @@ export function App() {
           <Text type="secondary">Đang kiểm tra phiên đăng nhập...</Text>
         </div>
       ) : user ? (
+        <>
+        <Modal 
+          open={!!lightboxImage} 
+          onCancel={() => setLightboxImage(null)} 
+          footer={null} 
+          width="auto"
+          centered
+          className="imageLightbox"
+        >
+          <img src={lightboxImage} alt="Phóng to" />
+        </Modal>
         <section className="chatApp">
           <aside className="leftRail">
             <div className="brandBlock">
@@ -609,6 +684,24 @@ export function App() {
                           <div className={`bubble ${mine ? "mine" : ""}`}>
                             {item.type === "sticker" ? (
                               <img className="stickerMessage" src={item.content} alt="Sticker" />
+                            ) : item.type === "image" || item.type === "mixed" ? (
+                              <>
+                                {item.content ? <p>{item.content}</p> : null}
+                                {item.images?.length > 0 ? (
+                                  <div className={`imageGrid count${item.images.length === 1 ? "1" : "many"}`}>
+                                    {item.images.map((img, idx) => (
+                                      <button
+                                        key={idx}
+                                        className="messageImageButton"
+                                        type="button"
+                                        onClick={() => setLightboxImage(img.url)}
+                                      >
+                                        <img src={img.url} alt="Sent image" loading="lazy" />
+                                      </button>
+                                    ))}
+                                  </div>
+                                ) : null}
+                              </>
                             ) : (
                               <p>{item.content}</p>
                             )}
@@ -650,6 +743,25 @@ export function App() {
             {activeConversation ? (
               <footer className="composer">
                 <form className="composerForm" onSubmit={sendMessage}>
+                  {selectedImages.length > 0 ? (
+                    <div className="selectedImagePreview">
+                      {selectedImages.map((img, index) => (
+                        <div className="selectedImageItem" key={index}>
+                          <img src={img.previewUrl} alt="Preview" />
+                          <button type="button" onClick={() => removeSelectedImage(index)}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  {isSending ? <Text type="secondary" className="sendingStatus">Đang gửi ảnh...</Text> : null}
+                  <input
+                    ref={imageInputRef}
+                    className="hiddenFileInput"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    multiple
+                    onChange={handleImageSelect}
+                  />
                   <Dropdown
                     trigger={["click"]}
                     placement="topLeft"
@@ -669,17 +781,21 @@ export function App() {
                       </div>
                     )}
                   >
-                    <Button size="large" type="default" htmlType="button">
+                    <Button size="large" type="default" htmlType="button" disabled={isSending}>
                       Sticker
                     </Button>
                   </Dropdown>
+                  <Button size="large" type="default" onClick={() => imageInputRef.current?.click()} disabled={isSending}>
+                    Ảnh
+                  </Button>
                   <Input
                     size="large"
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
                     placeholder="Nhập tin nhắn..."
+                    disabled={isSending}
                   />
-                  <Button size="large" type="primary" htmlType="submit">
+                  <Button size="large" type="primary" htmlType="submit" loading={isSending}>
                     Gửi
                   </Button>
                 </form>
@@ -861,6 +977,7 @@ export function App() {
             ) : null}
           </aside>
         </section>
+        </>
       ) : (
         <section className="loginHero">
           <div className="heroCopy">
